@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kredi Takip</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #1e1e2e;
+    --accent: #e8ff47;
+    --accent2: #47c8ff;
+    --accent3: #ff6b47;
+    --text: #e8e8f0;
+    --muted: #6060788;
+    --muted2: #606078;
+    --danger: #ff4747;
+    --warn: #ffaa47;
+    --ok: #47ff8c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 80px 0;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d0d1a 0%, #111128 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted2);
+  }
+
+  /* SUMMARY STRIP */
+  .summary-strip {
+    background: var(--surface);
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .summary-item {
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .summary-item .val {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .summary-item .lbl {
+    font-size: 9px;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .val.danger { color: var(--danger); }
+  .val.warn { color: var(--warn); }
+  .val.ok { color: var(--ok); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    padding: 12px 16px 0;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted2);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: 'Syne', sans-serif;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-color: var(--accent);
+  }
+
+  /* SECTION */
+  .section {
+    padding: 16px 16px 0;
+  }
+  .section-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* CREDIT CARD */
+  .credit-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .credit-card:active { transform: scale(0.98); }
+  .credit-card.urgent { border-left: 3px solid var(--danger); }
+  .credit-card.soon { border-left: 3px solid var(--warn); }
+  .credit-card.ok-status { border-left: 3px solid var(--ok); }
+
+  .card-glow {
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+  .urgent .card-glow { background: var(--danger); }
+  .soon .card-glow { background: var(--warn); }
+  .ok-status .card-glow { background: var(--ok); }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .card-bank {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 3px;
+  }
+  .card-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .card-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge-danger { background: rgba(255,71,71,0.15); color: var(--danger); }
+  .badge-warn { background: rgba(255,170,71,0.15); color: var(--warn); }
+  .badge-ok { background: rgba(71,255,140,0.15); color: var(--ok); }
+
+  .card-progress {
+    margin-bottom: 12px;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+  .fill-danger { background: var(--danger); }
+  .fill-warn { background: var(--warn); }
+  .fill-ok { background: var(--ok); }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted2);
+  }
+
+  .card-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .card-stat .stat-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .card-stat .stat-lbl {
+    font-size: 9px;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .due-date-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted2);
+    font-family: 'DM Mono', monospace;
+  }
+  .due-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-danger { background: var(--danger); animation: pulse 1.5s infinite; }
+  .dot-warn { background: var(--warn); }
+  .dot-ok { background: var(--ok); }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* EDIT MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    width: 100%;
+    padding: 20px 16px 40px;
+    animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin: 0 auto 20px;
+  }
+  .modal h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .form-group label {
+    font-size: 10px;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .form-group input, .form-group select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--accent);
+  }
+  .form-group select option { background: var(--card); }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: var(--accent); color: #0a0a0f; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-danger-btn { background: rgba(255,71,71,0.15); color: var(--danger); border: 1px solid var(--danger); }
+
+  /* ADD BUTTON */
+  .fab {
+    position: fixed;
+    bottom: 20px; right: 16px;
+    width: 52px; height: 52px;
+    background: var(--accent);
+    color: #0a0a0f;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(232,255,71,0.3);
+    z-index: 50;
+    transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.9); }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted2);
+    font-size: 13px;
+  }
+
+  /* TOTAL BANNER */
+  .total-banner {
+    margin: 12px 16px;
+    background: linear-gradient(135deg, rgba(232,255,71,0.08) 0%, rgba(71,200,255,0.05) 100%);
+    border: 1px solid rgba(232,255,71,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-label { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 1px; }
+  .total-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .total-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted2);
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>⬡ KREDİ TAKİP</h1>
+    <span class="header-date" id="currentDate"></span>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <div class="summary-item">
+    <span class="val danger" id="sumTotal">—</span>
+    <span class="lbl">Toplam Borç</span>
+  </div>
+  <div class="summary-item">
+    <span class="val warn" id="sumMonthly">—</span>
+    <span class="lbl">Aylık Taksit</span>
+  </div>
+  <div class="summary-item">
+    <span class="val ok" id="sumCount">—</span>
+    <span class="lbl">Aktif Kredi</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="filterTab(this,'all')">Tümü</button>
+  <button class="tab" onclick="filterTab(this,'urgent')">🔴 Yakın</button>
+  <button class="tab" onclick="filterTab(this,'Garanti BBVA')">Garanti</button>
+  <button class="tab" onclick="filterTab(this,'Yapı Kredi')">Yapı Kredi</button>
+  <button class="tab" onclick="filterTab(this,'Diğer')">Diğer</button>
+</div>
+
+<div class="total-banner" id="totalBanner">
+  <div>
+    <div class="total-label">Bu ay ödenecek</div>
+    <div class="total-sub" id="nextDueText">—</div>
+  </div>
+  <div class="total-val" id="urgentTotal">—</div>
+</div>
+
+<div class="section">
+  <div class="section-label">Krediler</div>
+  <div id="cardList"></div>
+</div>
+
+<button class="fab" onclick="openAddModal()">＋</button>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modalTitle">Yeni Kredi Ekle</h3>
+    <input type="hidden" id="editId">
+    <div class="form-row">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Kredi Adı</label>
+        <input type="text" id="fName" placeholder="İhtiyaç Kredisi">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Banka</label>
+        <select id="fBank">
+          <option>Garanti BBVA</option>
+          <option>Yapı Kredi</option>
+          <option>Ziraat</option>
+          <option>Halkbank</option>
+          <option>İş Bankası</option>
+          <option>Akbank</option>
+          <option>Diğer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tür</label>
+        <select id="fType">
+          <option>İhtiyaç Kredisi</option>
+          <option>Konut Kredisi</option>
+          <option>Taşıt Kredisi</option>
+          <option>Kredi Kartı Borcu</option>
+          <option>Diğer</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Toplam Tutar (TL)</label>
+        <input type="number" id="fTotal" placeholder="35000">
+      </div>
+      <div class="form-group">
+        <label>Taksit Tutarı (TL)</label>
+        <input type="number" id="fInstallment" placeholder="2776.92">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ödenen Taksit</label>
+        <input type="number" id="fPaid" placeholder="15">
+      </div>
+      <div class="form-group">
+        <label>Toplam Taksit</label>
+        <input type="number" id="fTotalInst" placeholder="24">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Son Ödeme Tarihi</label>
+        <input type="date" id="fDueDate">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">İptal</button>
+      <button class="btn btn-danger-btn" id="deleteBtn" onclick="deleteCredit()" style="display:none;flex:0.5">Sil</button>
+      <button class="btn btn-primary" onclick="saveCredit()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'kredi_takip_v2';
+
+const defaultCredits = [
+  { id:1, name:'İhtiyaç Kredisi', bank:'Garanti BBVA', type:'İhtiyaç Kredisi', total:35000, installment:2776.92, paid:15, totalInst:24, dueDate:'2026-04-08' },
+  { id:2, name:'İhtiyaç Kredisi', bank:'Garanti BBVA', type:'İhtiyaç Kredisi', total:200000, installment:15715.60, paid:12, totalInst:24, dueDate:'2026-03-30' },
+  { id:3, name:'İhtiyaç Kredisi', bank:'Garanti BBVA', type:'İhtiyaç Kredisi', total:20000, installment:2430.73, paid:10, totalInst:12, dueDate:'2026-03-30' },
+  { id:4, name:'İhtiyaç Kredisi', bank:'Garanti BBVA', type:'İhtiyaç Kredisi', total:150000, installment:17177.69, paid:1, totalInst:12, dueDate:'2026-03-22' },
+  { id:5, name:'İhtiyaç Kredisi', bank:'Yapı Kredi', type:'İhtiyaç Kredisi', total:22340, installment:1585.15, paid:0, totalInst:0, dueDate:'2026-03-30' },
+  { id:6, name:'İhtiyaç Kredisi', bank:'Yapı Kredi', type:'İhtiyaç Kredisi', total:10000, installment:1420.27, paid:0, totalInst:0, dueDate:'2026-03-27' },
+  { id:7, name:'İhtiyaç Kredisi', bank:'Yapı Kredi', type:'İhtiyaç Kredisi', total:60000, installment:4350.37, paid:0, totalInst:0, dueDate:'2026-03-25' },
+];
+
+let credits = [];
+let currentFilter = 'all';
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    credits = raw ? JSON.parse(raw) : defaultCredits;
+  } catch(e) { credits = defaultCredits; }
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(credits)); }
+
+function fmt(n) {
+  return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' TL';
+}
+function fmtShort(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M TL';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'K TL';
+  return fmt(n);
+}
+
+function daysUntil(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  now.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  return Math.round((d - now) / 86400000);
+}
+
+function getStatus(days) {
+  if (days <= 3) return 'urgent';
+  if (days <= 10) return 'soon';
+  return 'ok-status';
+}
+
+function renderCards() {
+  const list = document.getElementById('cardList');
+  let filtered = credits;
+  if (currentFilter === 'urgent') {
+    filtered = credits.filter(c => daysUntil(c.dueDate) <= 10);
+  } else if (currentFilter !== 'all') {
+    filtered = credits.filter(c => c.bank === currentFilter);
+  }
+  filtered.sort((a,b) => daysUntil(a.dueDate) - daysUntil(b.dueDate));
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">Bu filtrede kredi yok</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(c => {
+    const days = daysUntil(c.dueDate);
+    const status = getStatus(days);
+    const progress = c.totalInst > 0 ? Math.round((c.paid / c.totalInst) * 100) : 0;
+    const remaining = c.totalInst > 0 ? (c.totalInst - c.paid) : '—';
+    const fillClass = status === 'urgent' ? 'fill-danger' : status === 'soon' ? 'fill-warn' : 'fill-ok';
+    const badgeClass = status === 'urgent' ? 'badge-danger' : status === 'soon' ? 'badge-warn' : 'badge-ok';
+    const dotClass = status === 'urgent' ? 'dot-danger' : status === 'soon' ? 'dot-warn' : 'dot-ok';
+
+    let dayText = days < 0 ? `${Math.abs(days)} gün GEÇTİ` : days === 0 ? 'BUGÜN' : `${days} gün kaldı`;
+    const dueFormatted = new Date(c.dueDate).toLocaleDateString('tr-TR', {day:'numeric', month:'short', year:'numeric'});
+
+    return `
+    <div class="credit-card ${status}" onclick="openEditModal(${c.id})">
+      <div class="card-glow"></div>
+      <div class="card-top">
+        <div>
+          <div class="card-bank">${c.bank}</div>
+          <div class="card-name">${c.name}</div>
+        </div>
+        <span class="card-badge ${badgeClass}">${dayText}</span>
+      </div>
+      ${c.totalInst > 0 ? `
+      <div class="card-progress">
+        <div class="progress-track">
+          <div class="progress-fill ${fillClass}" style="width:${progress}%"></div>
+        </div>
+        <div class="progress-labels">
+          <span>${c.paid}/${c.totalInst} taksit</span>
+          <span>%${progress}</span>
+        </div>
+      </div>` : ''}
+      <div class="card-bottom">
+        <div class="card-stat">
+          <span class="stat-val">${fmtShort(c.total)}</span>
+          <span class="stat-lbl">Toplam</span>
+        </div>
+        <div class="card-stat">
+          <span class="stat-val" style="color:var(--accent)">${fmtShort(c.installment)}</span>
+          <span class="stat-lbl">Taksit</span>
+        </div>
+        <div class="card-stat">
+          <span class="stat-val">${remaining !== '—' ? remaining + ' taksit' : '—'}</span>
+          <span class="stat-lbl">Kalan</span>
+        </div>
+      </div>
+      <div class="due-date-chip">
+        <div class="due-dot ${dotClass}"></div>
+        Son ödeme: ${dueFormatted}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateSummary() {
+  const total = credits.reduce((s,c) => s + c.total, 0);
+  const monthly = credits.reduce((s,c) => s + c.installment, 0);
+  document.getElementById('sumTotal').textContent = fmtShort(total);
+  document.getElementById('sumMonthly').textContent = fmtShort(monthly);
+  document.getElementById('sumCount').textContent = credits.length;
+
+  // Urgent (next 10 days)
+  const urgent = credits.filter(c => daysUntil(c.dueDate) <= 10);
+  const urgentSum = urgent.reduce((s,c) => s + c.installment, 0);
+  document.getElementById('urgentTotal').textContent = fmtShort(urgentSum);
+  const urgentDates = urgent.map(c => new Date(c.dueDate).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}));
+  document.getElementById('nextDueText').textContent = urgent.length > 0 ? `${urgent.length} kredi — ${[...new Set(urgentDates)].join(', ')}` : 'Yakın ödeme yok';
+}
+
+function setCurrentDate() {
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('tr-TR', {weekday:'short', day:'numeric', month:'long'});
+}
+
+// MODAL
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'Yeni Kredi Ekle';
+  document.getElementById('editId').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fBank').value = 'Garanti BBVA';
+  document.getElementById('fType').value = 'İhtiyaç Kredisi';
+  document.getElementById('fTotal').value = '';
+  document.getElementById('fInstallment').value = '';
+  document.getElementById('fPaid').value = '';
+  document.getElementById('fTotalInst').value = '';
+  document.getElementById('fDueDate').value = '';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function openEditModal(id) {
+  const c = credits.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modalTitle').textContent = 'Krediyi Düzenle';
+  document.getElementById('editId').value = c.id;
+  document.getElementById('fName').value = c.name;
+  document.getElementById('fBank').value = c.bank;
+  document.getElementById('fType').value = c.type;
+  document.getElementById('fTotal').value = c.total;
+  document.getElementById('fInstallment').value = c.installment;
+  document.getElementById('fPaid').value = c.paid;
+  document.getElementById('fTotalInst').value = c.totalInst;
+  document.getElementById('fDueDate').value = c.dueDate;
+  document.getElementById('deleteBtn').style.display = 'flex';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function saveCredit() {
+  const id = document.getElementById('editId').value;
+  const obj = {
+    id: id ? parseInt(id) : Date.now(),
+    name: document.getElementById('fName').value || 'Kredi',
+    bank: document.getElementById('fBank').value,
+    type: document.getElementById('fType').value,
+    total: parseFloat(document.getElementById('fTotal').value) || 0,
+    installment: parseFloat(document.getElementById('fInstallment').value) || 0,
+    paid: parseInt(document.getElementById('fPaid').value) || 0,
+    totalInst: parseInt(document.getElementById('fTotalInst').value) || 0,
+    dueDate: document.getElementById('fDueDate').value || new Date().toISOString().split('T')[0],
+  };
+  if (id) {
+    const idx = credits.findIndex(x => x.id === parseInt(id));
+    credits[idx] = obj;
+  } else {
+    credits.push(obj);
+  }
+  save(); render(); closeModalDirect();
+}
+function deleteCredit() {
+  const id = parseInt(document.getElementById('editId').value);
+  if (!id) return;
+  if (!confirm('Bu krediyi silmek istediğinizden emin misiniz?')) return;
+  credits = credits.filter(x => x.id !== id);
+  save(); render(); closeModalDirect();
+}
+
+function filterTab(el, filter) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = filter;
+  renderCards();
+}
+
+function render() { renderCards(); updateSummary(); }
+
+load(); setCurrentDate(); render();
+</script>
+</body>
+</html>
